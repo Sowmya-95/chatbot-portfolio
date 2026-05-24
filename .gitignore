@@ -1,0 +1,45 @@
+node_modules
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Editor
+.vscode/
+
+# Claude / AI config
+.claude/
+CLAUDE.md
+AGENTS.md
+_old/
+
+# Mockups
+*.mockup.html
+*-mockup.html
+mockup-ideas.html
+preloader-extras-mockup.html
+chat-styles-mockup.html
+preloader-mockups.html
+
+# Superpowers planning docs
+docs/superpowers/
+
+ideas.md
