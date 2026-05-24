@@ -147,24 +147,55 @@ export async function initWebLLM(_onProgress?: (p: number) => void): Promise<boo
 
   try {
     const availability = await LanguageModel.availability();
+    console.log('Gemini Nano availability:', availability);
+
     if (availability === 'unavailable') {
       console.log('Gemini Nano not available on this device, using scripted responses');
       return false;
     }
 
+    if (availability === 'downloading') {
+      console.log('Gemini Nano is still downloading in the background, try again later');
+      return false;
+    }
+
+    if (availability !== 'available') {
+      console.log(`Gemini Nano status: ${availability}, attempting to create session...`);
+    }
+
     isLoading = true;
 
-    session = await LanguageModel.create({
+    // Timeout after 120 seconds — first-time setup can be slow
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error('Chrome AI session creation timed out')), 120000)
+    );
+
+    const sessionPromise = LanguageModel.create({
       initialPrompts: [
         { role: 'system', content: systemPrompt }
-      ]
+      ],
+      monitor(m: any) {
+        m.addEventListener('downloadprogress', (e: any) => {
+          const progress = e.loaded / e.total;
+          console.log(`Gemini Nano download: ${Math.round(progress * 100)}%`);
+          _onProgress?.(progress);
+        });
+      }
     });
+
+    session = await Promise.race([sessionPromise, timeoutPromise]);
+
+    if (!session) {
+      console.log('Chrome AI session creation timed out, using scripted responses');
+      isLoading = false;
+      return false;
+    }
 
     isReady = true;
     isLoading = false;
     return true;
   } catch (e) {
-    console.log('Chrome built-in AI failed to initialize, using scripted responses');
+    console.log('Chrome built-in AI failed to initialize:', e);
     isLoading = false;
     return false;
   }

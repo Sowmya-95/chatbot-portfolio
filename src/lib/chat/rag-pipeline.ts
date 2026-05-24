@@ -287,12 +287,22 @@ export async function queryRAG(userMessage: string): Promise<{ response: ChatRes
   thinking.addStep('context', `${topResults.length} chunks retrieved (${contextKb}kb)`);
   await delay(25);
 
-  // Step 5: Generate response
+  // Step 5: Generate response — scripted first, AI only on fallback
   const component = inferComponent(topResults);
   let response: ChatResponse;
 
-  if (getIsReady()) {
-    thinking.addStep('generating', 'generating with llm...');
+  thinking.addStep('generating', 'scripted response');
+  await delay(20);
+
+  response = getScriptedResponse(userMessage);
+
+  if (!response.component && component) {
+    response.component = component;
+  }
+
+  // If scripted engine couldn't match and AI is available, try AI
+  if (response.isFallback && getIsReady()) {
+    thinking.addStep('generating', 'fallback → generating with ai...');
     await delay(20);
 
     const contextText = topResults.map((r) => r.chunk.text).join('\n\n');
@@ -306,17 +316,6 @@ export async function queryRAG(userMessage: string): Promise<{ response: ChatRes
         component: (aiResult.component as ChatResponse['component']) || component,
         suggestedPrompts: getSuggestedPrompts(component)
       };
-    } else {
-      response = getScriptedResponse(userMessage);
-    }
-  } else {
-    thinking.addStep('generating', 'scripted response');
-    await delay(20);
-
-    response = getScriptedResponse(userMessage);
-
-    if (!response.component && component) {
-      response.component = component;
     }
   }
 

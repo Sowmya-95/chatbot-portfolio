@@ -4,6 +4,7 @@ export type ChatResponse = {
   text: string;
   component?: 'experience' | 'projects' | 'skills' | 'contact' | 'education' | 'about';
   suggestedPrompts?: string[];
+  isFallback?: boolean;
 };
 
 export const initialGreeting: ChatResponse = {
@@ -433,13 +434,15 @@ export function getScriptedResponse(message: string): ChatResponse {
         "I wish I could answer that, but I'm laser-focused on Sowmya's career. Ask me about her experience, projects, or tech stack!",
         "That one's beyond my scope — I'm built to talk about Sowmya's professional life. Here are some things I actually know well:"
       ]),
-      suggestedPrompts: ["Tell me about your work at Interaktiv", "Show me your projects", "What's your tech stack?", "How do I hire you?"]
+      suggestedPrompts: ["Tell me about your work at Interaktiv", "Show me your projects", "What's your tech stack?", "How do I hire you?"],
+      isFallback: true
     };
   }
 
   // General fallback
   return {
     text: pick(fallbackResponses),
-    suggestedPrompts: ["Tell me about your work at Interaktiv", "Show me your projects", "What's your tech stack?", "How do I hire you?"]
+    suggestedPrompts: ["Tell me about your work at Interaktiv", "Show me your projects", "What's your tech stack?", "How do I hire you?"],
+    isFallback: true
   };
 }

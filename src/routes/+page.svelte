@@ -40,11 +40,7 @@
 	let aiError = $state('');
 
 	async function toggleAI() {
-		if (aiReady) {
-			// Already active — no toggle off (session persists)
-			return;
-		}
-		if (aiLoading) return;
+		if (aiReady || aiLoading) return;
 
 		aiError = '';
 		aiLoading = true;
@@ -54,8 +50,22 @@
 		if (success) {
 			aiReady = true;
 		} else {
-			aiError = 'AI not available in this browser';
-			setTimeout(() => { aiError = ''; }, 4000);
+			const hasAPI = typeof globalThis.LanguageModel !== 'undefined';
+			if (hasAPI) {
+				try {
+					const status = await LanguageModel.availability();
+					if (status === 'downloading' || status === 'downloadable') {
+						aiError = 'AI model still downloading, try again shortly';
+					} else {
+						aiError = 'AI not available on this device';
+					}
+				} catch {
+					aiError = 'AI failed to initialize';
+				}
+			} else {
+				aiError = 'AI not available in this browser';
+			}
+			setTimeout(() => { aiError = ''; }, 5000);
 		}
 		aiLoading = false;
 	}
@@ -190,7 +200,7 @@
 			{#if aiLoading}
 				<div class="ai-status loading">
 					<span class="pulse-dot"></span>
-					AI loading...
+					AI loading{aiProgress > 0 ? `... ${Math.round(aiProgress * 100)}%` : '...'}
 				</div>
 			{:else if aiError}
 				<div class="ai-status error">
@@ -200,7 +210,7 @@
 			{:else if aiReady}
 				<div class="ai-status ready">
 					<span class="pulse-dot ready"></span>
-					AI active
+					AI enhanced
 				</div>
 			{:else}
 				<button class="ai-toggle" onclick={toggleAI} title="Switch to AI mode (Chrome only)">

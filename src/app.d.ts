@@ -20,6 +20,7 @@ declare global {
 		availability(options?: Record<string, unknown>): Promise<'unavailable' | 'downloadable' | 'downloading' | 'available'>;
 		create(options?: {
 			initialPrompts?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+			monitor?: (monitor: EventTarget) => void;
 		}): Promise<LanguageModelSession>;
 	};
 }
